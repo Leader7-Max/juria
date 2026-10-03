@@ -1,4 +1,3 @@
-
 import sqlite3
 import json
 from pathlib import Path
@@ -239,9 +238,9 @@ def recent_audit(limit=30):
     with get_conn() as conn:
         return [dict(r) for r in conn.execute("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))]
 
-# --- Fonctions de compatibilité ajoutées pour éviter les erreurs ---
-def fts_search(query: str, limit: int = 10):
-    """Effectue une recherche textuelle rapide dans les sources."""
+# --- Fonctions de compatibilité robustes ---
+def fts_search(query: str, *args, limit: int = 10, **kwargs):
+    """Effectue une recherche textuelle rapide en acceptant tous les types d'appels."""
     with get_conn() as conn:
         try:
             rows = conn.execute(
