@@ -1,3 +1,4 @@
+
 import sqlite3
 import json
 from pathlib import Path
@@ -237,3 +238,20 @@ def delete_user(uid):
 def recent_audit(limit=30):
     with get_conn() as conn:
         return [dict(r) for r in conn.execute("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,))]
+
+# --- Fonctions de compatibilité ajoutées pour éviter les erreurs ---
+def fts_search(query: str, limit: int = 10):
+    """Effectue une recherche textuelle rapide dans les sources."""
+    with get_conn() as conn:
+        try:
+            rows = conn.execute(
+                "SELECT * FROM sources WHERE content LIKE ? OR title LIKE ? LIMIT ?",
+                (f"%{query}%", f"%{query}%", limit)
+            ).fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
+
+def get_user_by_email(email: str):
+    """Alias pour récupérer un utilisateur par son email."""
+    return get_user(email)
