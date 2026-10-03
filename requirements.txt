@@ -1,6 +1,6 @@
-streamlit>=1.40.0
-google-generativeai>=0.8.0
-pypdf>=4.0.0
-numpy>=1.26.0
-cryptography>=42.0.0
-gTTS>=2.5.0
+streamlit>=1.40
+google-genai>=1.0
+pypdf>=4.0
+numpy>=1.26
+cryptography>=42
+gTTS>=2.5
