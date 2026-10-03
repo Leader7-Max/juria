@@ -21,7 +21,7 @@ html, body, [class*="css"] {font-size:18px;}
 </style>""", unsafe_allow_html=True)
 
 P_HOME, P_CHAT, P_DOC, P_CASE = "🏠 Accueil", "💬 Conversation", "📄 Analyser un document", "📁 Mon dossier"
-P_SRC, P_GEN, P_HELPER, P_PRIV = "🔎 Sources & recherche", "✍️ Générer un document", "⚖️ Trouver une aide", "🔐 Confidentialité"
+P_SRC, P_GEN, P_HELPER, P_PRIV = "🔎 Sources & recherche", "✍️ Générer un document", "⚖️ Trouver une aide aide", "🔐 Confidentialité"
 P_FAQ, P_ADMIN = "❓ Aide", "🛠️ Administration"
 
 
@@ -47,7 +47,7 @@ def fmt_source(s):
         return (f"**[{s['label']}] {s['title']}** — {s.get('article') or 'sans article'} · vérifié le "
                 f"{s.get('last_verified') or 'n/c'} · confiance : {s.get('confidence') or 'n/c'}"
                 + (f" · [lien]({s['url']})" if s.get("url") else ""))
-    return f"🌐 [{s['title']}]({s['url']})"
+    return f"🌐 [{s['title']}]({s['url'])})"
 
 
 def new_case_form(uid, key):
@@ -65,6 +65,8 @@ def new_case_form(uid, key):
 def need_case(u):
     st.info("Créez d'abord un dossier : il regroupe vos échanges et documents (isolés des autres dossiers).")
     new_case_form(u["id"], "new_case_main")
+
+
 # ------------------------------------------------------------------ authentification
 def auth_view():
     st.title("⚖️ JURIA")
@@ -139,6 +141,8 @@ def sidebar(u):
         db.audit(u["id"], "logout")
         st.session_state.clear()
         st.rerun()
+
+
 # ------------------------------------------------------------------ pages
 def home_view(u, case):
     st.title("Comment pouvons-nous vous aider ?")
@@ -212,6 +216,8 @@ def chat_view(u, case, lang):
                        {"sources": res["sources"], "flags": res["flags"]})
         db.audit(u["id"], "question", f"case={case['id']} kind={res['kind']} risk={res['risk']}")
         st.rerun()
+
+
 def docs_view(u, case, lang):
     st.header("📄 Analyser un document")
     st.caption("Photo, image ou PDF. L'IA lit le document (OCR intégré), n'invente aucun délai et signale ce qui est illisible.")
@@ -249,7 +255,7 @@ def case_view(u, case, lang):
     t = st.tabs(["Résumé", "Documents", "Chronologie", "Données"])
     with t[0]:
         for label, kind in [("📝 Résume mon dossier", "summary"), ("📋 Quels documents me manquent ?", "missing"),
-                            ("🗓️ Reconstituer la chronologie", "timeline"), ("➡️ Prochains éléments à vérifier", "next")]:
+                          ("🗓️ Reconstituer la chronologie", "timeline"), ("➡️ Prochains éléments à vérifier", "next")]:
             if st.button(label, key=f"task_{kind}", use_container_width=True):
                 with st.spinner("Analyse du dossier…"):
                     try:
@@ -286,7 +292,7 @@ def case_view(u, case, lang):
                            json.dumps([c for c in db.export_user(u["id"])["cases"] if c["id"] == case["id"]],
                                       ensure_ascii=False, indent=2),
                            file_name=f"dossier_{case['id']}.json", mime="application/json")
-        if st.checkbox("Je veux supprimer définitivement ce dossier et ses documents") and st.button("🗑️ Supprimer", type="primary"):
+        if st.checkbox("Je veux supprimer définitivement ce dossier et ses documents") and st.button("🗑️️ Supprimer", type="primary"):
             db.delete_case(case["id"], u["id"])
             db.audit(u["id"], "case_deleted", str(case["id"]))
             st.session_state.pop("case_id", None)
@@ -318,6 +324,8 @@ def sources_view():
                 st.write(h["content"])
                 if h.get("url"):
                     st.markdown(f"[Source officielle]({h['url']})")
+
+
 def gen_view(u, case, lang):
     st.header("✍️ Générer un document")
     st.warning("Tout document généré est un **projet à vérifier** avant utilisation ou envoi. Aucune garantie d'acceptation.")
@@ -400,6 +408,8 @@ def faq_view():
                 "**Puis-je me fier aux délais ?** Seulement s'ils sont issus d'une source ou de votre document. "
                 "Vérifiez-les toujours auprès de l'autorité concernée.\n\n"
                 "**L'IA peut-elle se tromper ?** Oui. Pour toute décision importante, consultez un professionnel.")
+
+
 # ------------------------------------------------------------------ administration
 def admin_dashboard():
     items = list(db.stats().items())
@@ -417,9 +427,9 @@ def admin_dashboard():
 def admin_users(u):
     users = db.list_users()
     st.dataframe([{"ID": x["id"], "E-mail": x["email"], "Rôle": "Admin" if x["is_admin"] else "Utilisateur",
-                   "Statut": "Actif" if x["is_active"] else "Suspendu", "Inscrit le": x["created_at"][:10],
-                   "Dernière connexion": (x["last_login"] or "—")[:16], "Dossiers": x["cases"],
-                   "Questions": x["questions"]} for x in users], use_container_width=True, hide_index=True)
+                    "Statut": "Actif" if x["is_active"] else "Suspendu", "Inscrit le": x["created_at"][:10],
+                    "Dernière connexion": (x["last_login"] or "—")[:16], "Dossiers": x["cases"],
+                    "Questions": x["questions"]} for x in users], use_container_width=True, hide_index=True)
     st.caption("Par confidentialité, l'administration ne voit ni les conversations ni les documents des utilisateurs.")
     opts = {x["id"]: x["email"] for x in users}
     uid = st.selectbox("Gérer un compte", list(opts), format_func=opts.get)
