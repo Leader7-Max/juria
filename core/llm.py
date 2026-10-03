@@ -1,35 +1,52 @@
-"""Module d'interaction avec les modèles Gemini."""
-import streamlit as st
-from google import genai
-from core.config import GEMINI_MODEL, EMBED_MODEL, secret
+import os
+import io
+import tempfile
 
-def get_gemini_client():
-    """Initialise et retourne le client Google GenAI."""
-    api_key = secret("GEMINI_API_KEY")
-    if not api_key:
-        st.error("La clé API Gemini (GEMINI_API_KEY) est introuvable dans les secrets ou l'environnement.")
-    return genai.Client(api_key=api_key)
+try:
+    import google.generativeai as genai
+    API_AVAILABLE = True
+except ImportError:
+    API_AVAILABLE = False
 
-def generate_text(prompt: str, system_instruction: str = None) -> str:
-    """Génère du texte via le modèle Gemini configuré."""
-    client = get_gemini_client()
-    config = {}
-    if system_instruction:
-        config["system_instruction"] = system_instruction
-        
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config=config if config else None
-    )
-    return response.text
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
 
-def get_embedding(text: str) -> list[float]:
-    """Génère les embeddings (vecteurs) d'un texte pour le RAG."""
-    client = get_gemini_client()
-    response = client.models.embed_content(
-        model=EMBED_MODEL,
-        contents=text
-    )
-    # Retourne la liste des valeurs de l'embedding
-    return response.embedding.values
+from core.config import GEMINI_MODEL
+
+# Configuration sécurisée de l'API Gemini
+api_key = os.environ.get("GEMINI_API_KEY")
+if api_key and API_AVAILABLE:
+    genai.configure(api_key=api_key)
+
+def transcribe(audio_bytes: bytes) -> str:
+    """Transcrit un enregistrement audio en texte via Gemini (avec sécurité si l'API n'est pas prête)."""
+    if not api_key or not API_AVAILABLE:
+        raise RuntimeError("La clé API Gemini n'est pas configurée ou le module n'est pas disponible.")
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as f:
+        f.write(audio_bytes)
+        temp_name = f.name
+    try:
+        audio_file = genai.upload_file(temp_name)
+        model = genai.GenerativeModel(GEMINI_MODEL)
+        response = model.generate_content([
+            audio_file, 
+            "Transcris cet enregistrement audio mot à mot en français, fidèlement, sans ajouter de commentaires ni de mise en forme superflue."
+        ])
+        return response.text.strip()
+    finally:
+        if os.path.exists(temp_name):
+            os.remove(temp_name)
+
+def tts(text: str, lang: str = "fr") -> bytes:
+    """Génère un fichier audio MP3 à partir d'un texte (synthèse vocale)."""
+    if not GTTS_AVAILABLE:
+        return b""
+    tts_obj = gTTS(text=text, lang=lang, slow=False)
+    fp = io.BytesIO()
+    tts_obj.write_to_fp(fp)
+    fp.seek(0)
+    return fp.read()
