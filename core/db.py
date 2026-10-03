@@ -254,3 +254,18 @@ def fts_search(query: str, *args, limit: int = 10, **kwargs):
 def get_user_by_email(email: str):
     """Alias pour récupérer un utilisateur par son email."""
     return get_user(email)
+
+def chunks_by_ids(ids, *args, **kwargs):
+    """Récupère des sources/morceaux par une liste d'identifiants."""
+    if not ids:
+        return []
+    with get_conn() as conn:
+        try:
+            placeholders = ','.join(['?'] * len(ids))
+            rows = conn.execute(
+                f"SELECT * FROM sources WHERE id IN ({placeholders})",
+                tuple(ids)
+            ).fetchall()
+            return [dict(r) for r in rows]
+        except Exception:
+            return []
