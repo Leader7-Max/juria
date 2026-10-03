@@ -6,7 +6,7 @@ from datetime import date
 
 import numpy as np
 
-from . import db, llm
+from core import db, llm
 
 
 def chunk_text(text: str, size=1200, overlap=150) -> list[str]:
