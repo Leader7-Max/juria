@@ -143,7 +143,6 @@ def country_source_count(country):
 
 def get_messages(case_id, uid):
     with get_conn() as conn:
-        # Vérifie que le dossier appartient bien à l'utilisateur
         c = conn.execute("SELECT id FROM cases WHERE id = ? AND user_id = ?", (case_id, uid)).fetchone()
         if not c:
             return []
@@ -217,7 +216,7 @@ def stats():
 def list_users():
     with get_conn() as conn:
         return [dict(r) for r in conn.execute("""
-            USELECT u.id, u.email, u.is_admin, u.is_active, u.created_at, u.last_login,
+            SELECT u.id, u.email, u.is_admin, u.is_active, u.created_at, u.last_login,
                    (SELECT COUNT(*) FROM cases c WHERE c.user_id = u.id) as cases,
                    (SELECT COUNT(*) FROM messages m JOIN cases c ON m.case_id = c.id WHERE c.user_id = u.id AND m.role='user') as questions
             FROM users u ORDER BY u.id DESC
