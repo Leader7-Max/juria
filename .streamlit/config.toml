@@ -11,3 +11,6 @@ enableXsrfProtection = true
 
 [browser]
 gatherUsageStats = false
+
+[runner]
+mainScriptPath = "app.py"
