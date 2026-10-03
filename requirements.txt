@@ -1,6 +1,3 @@
-streamlit>=1.40
-google-genai>=1.0
-pypdf>=4.0
-numpy>=1.26
-cryptography>=42
-gTTS>=2.5
+git add requirements.txt
+git commit -m "Mise à jour des dépendances requirements.txt"
+git push origin main
