@@ -8,7 +8,9 @@ from pathlib import Path
 
 import streamlit as st
 
-from core import db, llm, pipeline as pl, rag, security as sec
+from core import db, llm, rag
+import core.pipeline as pl
+import core.security as sec
 from core.config import (ADMIN_EMAILS, AI_NOTICE, COUNTRIES, DOMAINS, GEMINI_MODEL, LANGS, MAX_UPLOAD_MB,
                          SHORT_NOTICE, STATUSES, UPLOAD_DIR)
 
