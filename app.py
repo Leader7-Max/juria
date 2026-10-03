@@ -47,7 +47,7 @@ def fmt_source(s):
         return (f"**[{s['label']}] {s['title']}** — {s.get('article') or 'sans article'} · vérifié le "
                 f"{s.get('last_verified') or 'n/c'} · confiance : {s.get('confidence') or 'n/c'}"
                 + (f" · [lien]({s['url']})" if s.get("url") else ""))
-    return f"🌐 [{s['title']}]({s['url'])})"
+    return f"🌐 [{s['title']}]({s['url']})"
 
 
 def new_case_form(uid, key):
