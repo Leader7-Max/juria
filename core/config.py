@@ -21,10 +21,16 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "juria.db"
 
-GEMINI_MODEL = secret("GEMINI_MODEL", "gemini-2.5-flash")
+# Configuration des clés et modèles via les secrets ou variables d'environnement
+GEMINI_API_KEY = secret("GEMINI_API_KEY")
+GEMINI_MODEL = secret("GEMINI_MODEL", "gemini-1.5-flash")
 EMBED_MODEL = secret("GEMINI_EMBED_MODEL", "gemini-embedding-001")
 ADMIN_EMAILS = [e.strip().lower() for e in secret("ADMIN_EMAILS").split(",") if e.strip()]
 MAX_UPLOAD_MB = 15
+
+# Injection automatique de la clé API pour le SDK Google GenAI si elle est disponible
+if GEMINI_API_KEY:
+    os.environ["GEMINI_API_KEY"] = GEMINI_API_KEY
 
 # Sites officiels PRIVILÉGIÉS pour la recherche web (indications à vérifier, pas une base juridique).
 COUNTRIES = {
