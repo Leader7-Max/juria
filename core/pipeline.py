@@ -5,7 +5,7 @@ from datetime import date, datetime
 
 from google.genai import types
 
-from . import db, llm, rag
+from core import db, llm, rag
 from .config import COUNTRIES, LANG_NAMES
 
 SYSTEM = """Tu es JURIA, un assistant juridique fondé sur l'intelligence artificielle. Tu n'es JAMAIS un avocat humain.
