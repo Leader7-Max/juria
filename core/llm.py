@@ -5,7 +5,7 @@ from google import genai
 from gtts import gTTS
 from core.config import GEMINI_API_KEY, GEMINI_MODEL
 
-# Initialisation avec le nouveau client google-genai
+# Initialisation du client google-genai
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 def transcribe(audio_bytes: bytes) -> str:
