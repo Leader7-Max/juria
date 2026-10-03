@@ -296,7 +296,7 @@ def case_view(u, case, lang):
                            json.dumps([c for c in db.export_user(u["id"])["cases"] if c["id"] == case["id"]],
                                       ensure_ascii=False, indent=2),
                            file_name=f"dossier_{case['id']}.json", mime="application/json")
-        if st.checkbox("Je veux supprimer définitivement ce dossier et ses documents") and st.button("🗑️️ Supprimer", type="primary"):
+        if st.checkbox("Je veux supprimer définitivement ce dossier et ses documents") and st.button("🗑 Supprimer", type="primary"):
             db.delete_case(case["id"], u["id"])
             db.audit(u["id"], "case_deleted", str(case["id"]))
             st.session_state.pop("case_id", None)
