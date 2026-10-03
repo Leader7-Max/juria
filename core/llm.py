@@ -1,6 +1,7 @@
 import os
 import io
 import tempfile
+import time
 from google import genai
 from gtts import gTTS
 from core.config import GEMINI_API_KEY, GEMINI_MODEL
@@ -8,33 +9,63 @@ from core.config import GEMINI_API_KEY, GEMINI_MODEL
 # Initialisation du client google-genai
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-def generate(prompt_or_messages, *args, model=None, **kwargs):
-    """Génère du texte en utilisant le client officiel google-genai."""
+def generate(prompt_or_messages, system_prompt=None, json_mode=False, web=False, model=None, **kwargs):
+    """
+    Génère du texte via google-genai et renvoie TOUJOURS un tuple (texte, metadonnees/sources)
+    pour éviter toute erreur de déballage (unpacking) dans le pipeline.
+    """
     if not client:
         raise RuntimeError("La clé API Gemini n'est pas configurée.")
     
     selected_model = model or GEMINI_MODEL
     
-    # Transformation des messages au format texte si on reçoit une liste de dictionnaires
-    if isinstance(prompt_or_messages, list):
-        prompt_parts = []
-        for msg in prompt_or_messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            prompt_parts.append(f"{role}: {content}")
-        contents = "\n".join(prompt_parts)
-    else:
-        contents = str(prompt_or_messages)
+    # Construction du contenu des messages
+    contents = []
+    if system_prompt:
+        contents.append(f"INSTRUCTIONS SYSTÈME :\n{system_prompt}\n")
 
-    try:
-        response = client.models.generate_content(
-            model=selected_model,
-            contents=contents
-        )
-        return response.text.strip()
-    except Exception as e:
-        print(f"Erreur lors de la génération avec le SDK google-genai : {e}")
-        raise e
+    if isinstance(prompt_or_messages, list):
+        for msg in prompt_or_messages:
+            if hasattr(msg, "role") and hasattr(msg, "parts"):  # Objet GenAI Part (ex: bytes upload)
+                contents.append(msg)
+            elif isinstance(msg, dict):
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                contents.append(f"{role}: {content}")
+            else:
+                contents.append(str(msg))
+    else:
+        contents.append(str(prompt_or_messages))
+
+    # Configuration de la requête (JSON mode si demandé)
+    config = {}
+    if json_mode:
+        config["response_mime_type"] = "application/json"
+
+    # Tentatives multiples en cas de surcharge temporaire (erreur 503)
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=selected_model,
+                contents=contents,
+                config=config if config else None
+            )
+            break
+        except Exception as e:
+            if "503" in str(e) and attempt < max_retries - 1:
+                time.sleep(2 * (attempt + 1))  # Attente exponentielle (2s, 4s...)
+                continue
+            if attempt == max_retries - 1:
+                print(f"Erreur persistante après {max_retries} tentatives : {e}")
+            raise e
+
+    text_result = response.text.strip() if response and response.text else ""
+    
+    # Le pipeline s'attend à recevoir un tuple de 2 éléments : (texte, sources_web)
+    web_sources = []
+    return text_result, web_sources
 
 def transcribe(audio_bytes: bytes) -> str:
     """Transcrit un enregistrement audio en texte via Gemini."""
